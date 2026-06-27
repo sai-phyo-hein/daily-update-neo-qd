@@ -1,0 +1,41 @@
+name: Build Keep-Alive Binary
+
+on:
+  push:
+    paths:
+      - "db-keepalive/src/**"
+      - "db-keepalive/Cargo.toml"
+      - "db-keepalive/Cargo.lock"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and upload binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Build release binary
+        working-directory: ./db-keepalive
+        run: cargo build --release
+
+      # Store the binary as a versioned release asset so keepalive.yml can fetch it
+      - name: Upload binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-keepalive-linux-x86_64
+          path: db-keepalive/target/release/db-keepalive
+          retention-days: 90   # keep for 3 months; bump if needed

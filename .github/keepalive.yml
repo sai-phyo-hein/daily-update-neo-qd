@@ -1,0 +1,33 @@
+name: Database Keep-Alive
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    name: Ping Neo4j + Qdrant
+    runs-on: ubuntu-latest
+    steps:
+      # Download the latest binary produced by build.yml
+      # No Rust, no compile — just fetch and run.
+      - name: Download pre-built binary
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: build.yml
+          name: db-keepalive-linux-x86_64
+          # Always picks the most recent successful build.yml run
+          workflow_conclusion: success
+
+      - name: Run keep-alive
+        env:
+          NEO4J_URI:      ${{ secrets.NEO4J_URI }}
+          NEO4J_USER:     ${{ secrets.NEO4J_USER }}
+          NEO4J_PASS:     ${{ secrets.NEO4J_PASS }}
+          NEO4J_DATABASE: ${{ secrets.NEO4J_DATABASE }}
+          QDRANT_URL:     ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: |
+          chmod +x db-keepalive
+          ./db-keepalive
