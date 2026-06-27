@@ -2,10 +2,14 @@ mod neo4j;
 mod qdrant;
 
 use chrono::Utc;
+use chrono_tz::Asia::Bangkok;
 
 #[tokio::main]
 async fn main() {
-    let now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    let now = Utc::now()
+        .with_timezone(&Bangkok)
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
 
     let (neo4j_result, qdrant_result) = tokio::join!(
         neo4j::ping(now.clone()),
